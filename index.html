@@ -1,43 +1,63 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/src/styles.css" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
-    <script type="module" src="/src/main.ts" defer></script>
-  </head>
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="stylesheet" href="src/styles.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tauri デモアプリケーション</title>
+        <script src="src/app.js" defer></script>
+    </head>
 
-  <body>
-    <main class="container">
-      <h1>Welcome to Tauri</h1>
+    <body>
+        <div class="app-container">
+            <!-- ヘッダー -->
+            <header class="app-header">
+                <div class="header-content">
+                    <div>
+                        <h1>Tauri デモアプリケーション</h1>
+                        <p>スタンドアロンTauriアプリケーションのデモ集</p>
+                    </div>
+                    <button id="reload-btn" class="reload-btn">
+                        🔄 リロード (Cmd+R)
+                    </button>
+                </div>
+            </header>
 
-      <div class="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/src/assets/vite.svg" class="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img
-            src="/src/assets/tauri.svg"
-            class="logo tauri"
-            alt="Tauri logo"
-          />
-        </a>
-        <a href="https://www.typescriptlang.org/docs" target="_blank">
-          <img
-            src="/src/assets/typescript.svg"
-            class="logo typescript"
-            alt="typescript logo"
-          />
-        </a>
-      </div>
-      <p>Click on the Tauri logo to learn more about the framework</p>
+            <!-- メインコンテンツ -->
+            <main class="app-main">
+                <!-- 左サイドバー：デモ一覧 -->
+                <aside class="demo-sidebar">
+                    <h2>デモ一覧</h2>
+                    <nav class="demo-nav">
+                        <ul id="demo-list" class="demo-list">
+                            <!-- デモアイテムはJavaScriptで動的に生成 -->
+                        </ul>
+                    </nav>
+                </aside>
 
-      <form class="row" id="greet-form">
-        <input id="greet-input" placeholder="Enter a name..." />
-        <button type="submit">Greet</button>
-      </form>
-      <p id="greet-msg"></p>
-    </main>
-  </body>
+                <!-- 右側：デモ表示エリア -->
+                <section class="demo-content">
+                    <div id="demo-display" class="demo-display">
+                        <!-- 初期表示 -->
+                        <div class="welcome-message">
+                            <h2>Tauriデモアプリケーションへようこそ</h2>
+                            <p>左側のメニューからデモを選択してください。</p>
+                            <div class="demo-info">
+                                <h3>利用可能なデモ：</h3>
+                                <ul>
+                                    <li>
+                                        Hello World デモ -
+                                        シンプルなボタンクリックデモ
+                                    </li>
+                                    <li>
+                                        画像ビューア - 画像を選択・表示するデモ
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
 </html>

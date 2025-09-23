@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Tauri Development",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "tauri:dev"],
+            "console": "integratedTerminal",
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "RUST_LOG": "debug",
+                "PATH": "${env:HOME}/.cargo/bin:${env:PATH}"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Tauri Build",
+            "type": "node", 
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "tauri:build"],
+            "console": "integratedTerminal",
+            "env": {
+                "RUST_BACKTRACE": "1",
+                "PATH": "${env:HOME}/.cargo/bin:${env:PATH}"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ]
+}
