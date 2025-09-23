@@ -1,47 +1,52 @@
-# スタンドアロン Tauri アプリ作成手順（macOS）
+# Standalone Tauri Project
 
-このプロジェクトは「完全にスタンドアロン起動する Tauri アプリ」を空フォルダから作成したサンプルです。WPF の代替としての最小構成で、.app/.dmg を生成して配布できます。
+このプロジェクトは完全にスタンドアロンで動作する Tauri アプリケーションです。
 
-## 必要なツール
+## 📚 ドキュメント
 
--   Node.js 18+（本プロジェクトでは 24.x）
--   npm（または pnpm/yarn）
--   Rust (rustup, cargo)
--   Xcode Command Line Tools（ビルドに必要）
+WPF でデスクトップアプリを開発していたエンジニア向けの包括的な学習ガイドが用意されています：
 
-## 初回セットアップ手順
+### 🎯 メイン学習コース
 
-1. 依存関係のインストール
-    - `npm install`
-2. 開発モードで起動
-    - `npm run tauri dev`
-    - 変更を保存すると自動リロードされます。
-3. リリースビルド（スタンドアロン配布）
-    - `npm run tauri build`
-    - 生成物：
-        - `.app`: `src-tauri/target/release/bundle/macos/tauri-app.app`
-        - `.dmg`: `src-tauri/target/release/bundle/dmg/tauri-app_0.1.0_aarch64.dmg`
+1. [01\_環境構築とプロジェクト作成](./docs/01_環境構築とプロジェクト作成.md) - 開発環境セットアップ
+2. [02\_プロジェクト構造の理解](./docs/02_プロジェクト構造の理解.md) - ファイル構成と役割
+3. [03\_基本的なコマンドとイベント](./docs/03_基本的なコマンドとイベント.md) - フロント・バック間通信
+4. [04\_ファイル操作とデータ永続化](./docs/04_ファイル操作とデータ永続化.md) - ファイル IO・DB 操作
+5. [05_HTML による UI 作成の基礎](./docs/05_HTMLによるUI作成の基礎.md) - XAML→HTML 移行
+6. [06_TypeScript とデータバインディング](./docs/06_TypeScriptとデータバインディング.md) - データバインディング実装
+7. [07_Rust と TypeScript の連携](./docs/07_RustとTypeScriptの連携.md) - 言語間連携パターン
+8. [08\_よく使う機能の実装例](./docs/08_よく使う機能の実装例.md) - 実践的な機能実装
+9. [09\_エラーハンドリングとデバッグ](./docs/09_エラーハンドリングとデバッグ.md) - エラー処理・デバッグ手法
+10. [10\_配布とデプロイメント](./docs/10_配布とデプロイメント.md) - アプリ配布・自動更新
+11. [11\_パフォーマンスとセキュリティ](./docs/11_パフォーマンスとセキュリティ.md) - 最適化・セキュリティ対策
+12. [12\_実践的なアプリケーション設計](./docs/12_実践的なアプリケーション設計.md) - アーキテクチャ設計
 
-## フロントエンド構成
+### 📖 付録・参考資料
 
--   Vite + TypeScript + バニラ（HTML/CSS/TS）
--   開発用サーバのポートは `tauri.conf.json` の `devUrl` で 1420 番。
+-   [付録 A: WPF vs Tauri 機能対応表](./docs/付録A_WPF_vs_Tauri機能対応表.md) - 機能対応・移行ガイド
+-   [付録 B: トラブルシューティングガイド](./docs/付録B_トラブルシューティングガイド.md) - よくある問題と解決法
+-   [付録 C: 参考リンクとリソース](./docs/付録C_参考リンクとリソース.md) - 公式ドキュメント・ツール集
 
-## バックエンド（Rust/Tauri）
+## 📁 プロジェクト構成
 
--   Rust 側エントリは `src-tauri/src/main.rs`
--   設定は `src-tauri/tauri.conf.json`
--   依存は `src-tauri/Cargo.toml`
-
-## よくある質問
-
--   アイコン変更
-    -   `src-tauri/icons/` を差し替えます。`npm run tauri icon <path>` も利用可能。
--   アプリアイデンティファイア
-    -   `tauri.conf.json` の `identifier`（例: `com.example.standalone`）
--   自動アップデートやプラグイン
-    -   `@tauri-apps/plugin-*` 系を追加して `tauri.conf.json` に反映します。
-
-## ライセンス
-
-自由に改変可。商用利用時は各依存のライセンスもご確認ください。
+```
+standaloneTauriProject/
+├── docs/                  # 学習ドキュメント（12章 + 付録3つ）
+├── src/                   # フロントエンド（TypeScript/HTML/CSS）
+│   ├── main.ts           # メインのTypeScriptファイル
+│   ├── style.css         # スタイルファイル
+│   └── vite-env.d.ts     # Viteの型定義
+├── src-tauri/            # バックエンド（Rust）
+│   ├── src/
+│   │   ├── main.rs       # メインのRustファイル
+│   │   └── lib.rs        # ライブラリファイル
+│   ├── Cargo.toml        # Rust依存関係
+│   ├── tauri.conf.json   # Tauri設定ファイル
+│   └── build.rs          # ビルドスクリプト
+├── dist/                 # ビルド済みフロントエンド
+├── index.html            # HTMLエントリーポイント
+├── package.json          # Node.js依存関係
+├── tsconfig.json         # TypeScript設定
+├── vite.config.ts        # Vite設定
+└── README.md             # このファイル
+```
