@@ -2,11 +2,26 @@ use std::fs;
 use std::path::Path;
 use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
+use tauri_plugin_dialog::DialogExt;
 
 #[derive(Serialize, Deserialize)]
 struct FileInfo {
     name: String,
     size: u64,
+}
+
+// 画像ファイル選択コマンド
+#[tauri::command]
+async fn select_image_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let dialog = app.dialog()
+        .file()
+        .add_filter("Images", &["png", "jpg", "jpeg", "gif", "bmp", "webp"])
+        .blocking_pick_file();
+
+    match dialog {
+        Some(path) => Ok(Some(path.to_string())),
+        None => Ok(None),
+    }
 }
 
 // 既存のgreetコマンド
@@ -78,6 +93,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             greet,
+            select_image_file,
             read_image_file,
             get_file_info
         ])

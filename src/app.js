@@ -160,39 +160,54 @@ function showImageViewerDemo() {
         if (button && display) {
             button.addEventListener("click", async () => {
                 try {
-                    const selected = await window.__TAURI__.plugin.dialog.open({
-                        multiple: false,
-                        filters: [
-                            {
-                                name: "Images",
-                                extensions: [
-                                    "png",
-                                    "jpg",
-                                    "jpeg",
-                                    "gif",
-                                    "bmp",
-                                    "webp",
-                                ],
-                            },
-                        ],
-                    });
+                    console.log("画像選択ボタンがクリックされました");
+                    button.textContent = "選択中...";
+                    button.disabled = true;
+
+                    // Tauri invoke APIを使用してカスタムコマンドでファイル選択
+                    const selected = await window.__TAURI__.core.invoke(
+                        "select_image_file"
+                    );
+
+                    console.log("選択されたファイル:", selected);
 
                     if (selected) {
                         try {
                             const imageData =
                                 await window.__TAURI__.core.invoke(
                                     "read_image_file",
-                                    { path: selected }
+                                    { filePath: selected }
                                 );
                             const fileInfo = await window.__TAURI__.core.invoke(
                                 "get_file_info",
-                                { path: selected }
+                                { filePath: selected }
                             );
 
+                            // ファイル拡張子から MIME type を推定
+                            const getImageMimeType = (filePath) => {
+                                const extension = filePath
+                                    .split(".")
+                                    .pop()
+                                    .toLowerCase();
+                                switch (extension) {
+                                    case "jpg":
+                                    case "jpeg":
+                                        return "jpeg";
+                                    case "png":
+                                        return "png";
+                                    case "gif":
+                                        return "gif";
+                                    case "webp":
+                                        return "webp";
+                                    default:
+                                        return "jpeg";
+                                }
+                            };
+
                             display.innerHTML = `
-                <img src="data:image/${
-                    fileInfo.extension
-                };base64,${imageData}" alt="選択された画像" />
+                <img src="data:image/${getImageMimeType(
+                    selected
+                )};base64,${imageData}" alt="選択された画像" />
                 <div class="image-info">
                   <h4>ファイル情報</h4>
                   <p>ファイル名: ${fileInfo.name}</p>
@@ -202,11 +217,16 @@ function showImageViewerDemo() {
               `;
                             display.classList.add("has-image");
                         } catch (error) {
+                            console.error("画像読み込みエラー:", error);
                             display.innerHTML = `<div class="image-placeholder">画像の読み込みエラー: ${error}</div>`;
                         }
                     }
                 } catch (error) {
                     console.error("ファイル選択エラー:", error);
+                    display.innerHTML = `<div class="image-placeholder">ファイル選択エラー: ${error}</div>`;
+                } finally {
+                    button.textContent = "画像を選択";
+                    button.disabled = false;
                 }
             });
         }
