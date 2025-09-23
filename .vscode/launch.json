@@ -14,13 +14,11 @@
                 "RUST_LOG": "debug",
                 "PATH": "${env:HOME}/.cargo/bin:${env:PATH}"
             },
-            "skipFiles": [
-                "<node_internals>/**"
-            ]
+            "skipFiles": ["<node_internals>/**"]
         },
         {
             "name": "Tauri Build",
-            "type": "node", 
+            "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "runtimeExecutable": "npm",
@@ -30,9 +28,7 @@
                 "RUST_BACKTRACE": "1",
                 "PATH": "${env:HOME}/.cargo/bin:${env:PATH}"
             },
-            "skipFiles": [
-                "<node_internals>/**"
-            ]
+            "skipFiles": ["<node_internals>/**"]
         }
     ]
 }
