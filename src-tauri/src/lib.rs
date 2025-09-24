@@ -11,7 +11,7 @@ use database_service::DatabaseService;
 
 // 型定義を各サービスモジュールから再エクスポート
 pub use file_service::{FileInfo, DirectoryEntry};
-pub use system_service::{SystemInfo, DiskInfo};
+pub use system_service::{SystemInfo, DiskInfo, RealTimeMetrics};
 pub use database_service::{Memo, CreateMemoRequest, UpdateMemoRequest};
 
 // ========== Tauri コマンド層 ==========
@@ -39,6 +39,12 @@ fn read_image_file(file_path: &str) -> Result<String, String> {
 #[tauri::command]
 fn get_system_info() -> Result<SystemInfo, String> {
     SystemService::get_system_info()
+}
+
+/// リアルタイムメトリクス取得コマンド - CPU、メモリ使用率をリアルタイムで取得
+#[tauri::command]
+fn get_realtime_metrics() -> Result<RealTimeMetrics, String> {
+    SystemService::get_realtime_metrics()
 }
 
 /// ファイル情報取得コマンド - 指定されたファイルの詳細情報を取得
@@ -121,6 +127,7 @@ pub fn run() {
             list_directory,
             // システム情報
             get_system_info,
+            get_realtime_metrics,
             // データベース操作
             create_memo,
             get_all_memos,

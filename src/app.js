@@ -62,6 +62,12 @@ window.addEventListener("DOMContentLoaded", () => {
           <span class="demo-description">SQLiteを使ったメモアプリ - CRUD操作とデータの永続化</span>
         </button>
       </li>
+      <li class="demo-item">
+        <button data-demo-id="realtime-charts">
+          <span class="demo-title">📊 リアルタイムグラフデモ</span>
+          <span class="demo-description">CPU・メモリ使用率をリアルタイムで線グラフ表示</span>
+        </button>
+      </li>
     `;
 
         // クリックイベントを追加
@@ -79,6 +85,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     showFileExplorerDemo();
                 } else if (demoId === "database-memo") {
                     showDatabaseMemoDemo();
+                } else if (demoId === "realtime-charts") {
+                    showRealtimeChartsDemo();
                 }
             }
         });
@@ -919,3 +927,345 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// ========== リアルタイムグラフデモ ==========
+let cpuChart = null;
+let memoryChart = null;
+let chartUpdateInterval = null;
+
+function showRealtimeChartsDemo() {
+    // アクティブボタンを設定
+    document
+        .querySelectorAll(".demo-item button")
+        .forEach((btn) => btn.classList.remove("active"));
+    const activeBtn = document.querySelector(
+        'button[data-demo-id="realtime-charts"]'
+    );
+    if (activeBtn) activeBtn.classList.add("active");
+
+    const demoDisplay = document.getElementById("demo-display");
+
+    demoDisplay.innerHTML = `
+        <div class="demo-container realtime-charts-demo">
+            <div class="demo-header">
+                <h2>📊 リアルタイムグラフデモ</h2>
+                <p>CPU使用率とメモリ使用率をリアルタイムで線グラフ表示します</p>
+            </div>
+
+            <div class="charts-controls">
+                <button id="start-monitoring" class="btn">監視開始</button>
+                <button id="stop-monitoring" class="btn btn-secondary" disabled>監視停止</button>
+                <span class="monitoring-status">停止中</span>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h3>CPU使用率</h3>
+                    <canvas id="cpu-chart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>メモリ使用率</h3>
+                    <canvas id="memory-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-info">
+                <div class="info-card">
+                    <h4>現在の状況</h4>
+                    <div class="current-metrics">
+                        <div class="metric-item">
+                            <span class="metric-label">CPU:</span>
+                            <span id="current-cpu">--</span>%
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">メモリ:</span>
+                            <span id="current-memory">--</span>%
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">更新時刻:</span>
+                            <span id="last-update">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    console.log("Initializing realtime charts demo...");
+
+    // DOM要素の存在確認
+    const cpuCanvas = document.getElementById("cpu-chart");
+    const memoryCanvas = document.getElementById("memory-chart");
+    console.log("CPU canvas:", cpuCanvas);
+    console.log("Memory canvas:", memoryCanvas);
+    console.log("Chart.js available:", typeof Chart !== "undefined");
+
+    initializeCharts();
+    setupChartControls();
+}
+
+function initializeCharts() {
+    // Chart.jsが利用可能かチェック
+    if (typeof Chart === "undefined") {
+        console.error("Chart.js is not loaded");
+        document.getElementById("demo-display").innerHTML += `
+            <div class="error-message">
+                <h3>エラー</h3>
+                <p>Chart.jsライブラリの読み込みに失敗しました。</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        const cpuCtx = document.getElementById("cpu-chart").getContext("2d");
+        const memoryCtx = document
+            .getElementById("memory-chart")
+            .getContext("2d");
+
+        // CPU使用率チャート
+        cpuChart = new Chart(cpuCtx, {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "CPU使用率 (%)",
+                        data: [],
+                        borderColor: "#007acc",
+                        backgroundColor: "rgba(0, 122, 204, 0.1)",
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 0, // リアルタイム更新のためアニメーション無効
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function (value) {
+                                return value + "%";
+                            },
+                        },
+                    },
+                    x: {
+                        display: true,
+                        ticks: {
+                            maxTicksLimit: 20,
+                        },
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return (
+                                    context.dataset.label +
+                                    ": " +
+                                    context.raw.toFixed(1) +
+                                    "%"
+                                );
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        // メモリ使用率チャート
+        memoryChart = new Chart(memoryCtx, {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: "メモリ使用率 (%)",
+                        data: [],
+                        borderColor: "#28a745",
+                        backgroundColor: "rgba(40, 167, 69, 0.1)",
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 0,
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function (value) {
+                                return value + "%";
+                            },
+                        },
+                    },
+                    x: {
+                        display: true,
+                        ticks: {
+                            maxTicksLimit: 20,
+                        },
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return (
+                                    context.dataset.label +
+                                    ": " +
+                                    context.raw.toFixed(1) +
+                                    "%"
+                                );
+                            },
+                        },
+                    },
+                },
+            },
+        });
+    } catch (error) {
+        console.error("Chart initialization error:", error);
+        document.getElementById("demo-display").innerHTML += `
+            <div class="error-message">
+                <h3>チャート初期化エラー</h3>
+                <p>グラフの初期化に失敗しました: ${error.message}</p>
+            </div>
+        `;
+    }
+}
+
+function setupChartControls() {
+    const startBtn = document.getElementById("start-monitoring");
+    const stopBtn = document.getElementById("stop-monitoring");
+    const statusSpan = document.querySelector(".monitoring-status");
+
+    if (!startBtn || !stopBtn || !statusSpan) {
+        console.error("Chart control elements not found");
+        return;
+    }
+
+    startBtn.addEventListener("click", () => {
+        startMonitoring();
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        statusSpan.textContent = "監視中...";
+        statusSpan.style.color = "#28a745";
+    });
+
+    stopBtn.addEventListener("click", () => {
+        stopMonitoring();
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        statusSpan.textContent = "停止中";
+        statusSpan.style.color = "#6c757d";
+    });
+}
+
+function startMonitoring() {
+    // 最初の更新を即座に実行
+    updateCharts();
+
+    // 1秒間隔で更新
+    chartUpdateInterval = setInterval(updateCharts, 1000);
+}
+
+function stopMonitoring() {
+    if (chartUpdateInterval) {
+        clearInterval(chartUpdateInterval);
+        chartUpdateInterval = null;
+    }
+}
+
+async function updateCharts() {
+    try {
+        // Tauri APIの利用可能性をチェック
+        if (
+            !window.__TAURI__ ||
+            !window.__TAURI__.core ||
+            !window.__TAURI__.core.invoke
+        ) {
+            throw new Error("Tauri API is not available");
+        }
+
+        const metrics = await window.__TAURI__.core.invoke(
+            "get_realtime_metrics"
+        );
+        console.log("Received metrics:", metrics);
+
+        // 現在時刻のラベルを作成
+        const now = new Date();
+        const timeLabel =
+            now.getHours().toString().padStart(2, "0") +
+            ":" +
+            now.getMinutes().toString().padStart(2, "0") +
+            ":" +
+            now.getSeconds().toString().padStart(2, "0");
+
+        // チャートの存在確認
+        if (!cpuChart || !memoryChart) {
+            console.error("Charts are not initialized");
+            return;
+        }
+
+        // CPUチャートを更新
+        cpuChart.data.labels.push(timeLabel);
+        cpuChart.data.datasets[0].data.push(metrics.cpu_usage);
+
+        // メモリチャートを更新
+        memoryChart.data.labels.push(timeLabel);
+        memoryChart.data.datasets[0].data.push(metrics.memory_usage);
+
+        // データポイントが50個を超えたら古いものを削除
+        if (cpuChart.data.labels.length > 50) {
+            cpuChart.data.labels.shift();
+            cpuChart.data.datasets[0].data.shift();
+            memoryChart.data.labels.shift();
+            memoryChart.data.datasets[0].data.shift();
+        }
+
+        // チャートを更新
+        cpuChart.update();
+        memoryChart.update();
+
+        // 現在の値を表示
+        document.getElementById("current-cpu").textContent =
+            metrics.cpu_usage.toFixed(1);
+        document.getElementById("current-memory").textContent =
+            metrics.memory_usage.toFixed(1);
+        document.getElementById("last-update").textContent = timeLabel;
+    } catch (error) {
+        console.error("メトリクス取得エラー:", error);
+        document.getElementById("current-cpu").textContent = "エラー";
+        document.getElementById("current-memory").textContent = "エラー";
+    }
+}
+
+// ページを離れる際にチャートのクリーンアップ
+window.addEventListener("beforeunload", () => {
+    stopMonitoring();
+    if (cpuChart) {
+        cpuChart.destroy();
+    }
+    if (memoryChart) {
+        memoryChart.destroy();
+    }
+});

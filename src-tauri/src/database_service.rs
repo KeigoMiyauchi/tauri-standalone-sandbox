@@ -2,7 +2,7 @@ use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use chrono::Utc;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use tauri::Manager;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Memo {

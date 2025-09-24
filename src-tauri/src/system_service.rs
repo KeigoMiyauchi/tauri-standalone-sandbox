@@ -28,6 +28,13 @@ pub struct DiskInfo {
     pub file_system: String,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RealTimeMetrics {
+    pub cpu_usage: f32,
+    pub memory_usage: f32,
+    pub timestamp: i64,
+}
+
 /// システム情報取得を担当するサービスクラス
 pub struct SystemService;
 
@@ -92,6 +99,49 @@ impl SystemService {
             memory_usage_percent,
             uptime: System::uptime(),
             disks,
+        })
+    }
+
+    /// リアルタイムメトリクス（CPU、メモリ使用率）を取得
+    pub fn get_realtime_metrics() -> Result<RealTimeMetrics, String> {
+        let mut system = System::new_all();
+        
+        // CPU情報を更新（少し時間をおいて正確な使用率を取得）
+        system.refresh_cpu();
+        std::thread::sleep(std::time::Duration::from_millis(200));
+        system.refresh_cpu();
+        
+        // メモリ情報を更新
+        system.refresh_memory();
+        
+        // CPUの使用率を計算（全コアの平均）
+        let cpu_usage = if system.cpus().is_empty() {
+            0.0
+        } else {
+            system.cpus().iter()
+                .map(|cpu| cpu.cpu_usage())
+                .sum::<f32>() / system.cpus().len() as f32
+        };
+
+        // メモリ使用率を計算
+        let total_memory = system.total_memory();
+        let used_memory = system.used_memory();
+        let memory_usage = if total_memory > 0 {
+            (used_memory as f32 / total_memory as f32) * 100.0
+        } else {
+            0.0
+        };
+
+        // 現在のタイムスタンプ（ミリ秒）
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| format!("タイムスタンプの取得に失敗しました: {}", e))?
+            .as_millis() as i64;
+
+        Ok(RealTimeMetrics {
+            cpu_usage,
+            memory_usage,
+            timestamp,
         })
     }
 }
