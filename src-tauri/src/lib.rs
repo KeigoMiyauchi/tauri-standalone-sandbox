@@ -12,6 +12,14 @@ struct FileInfo {
 }
 
 #[derive(Serialize, Deserialize)]
+struct DirectoryEntry {
+    name: String,
+    is_dir: bool,
+    size: Option<u64>,
+    path: String,
+}
+
+#[derive(Serialize, Deserialize)]
 struct SystemInfo {
     os_name: String,
     os_version: String,
@@ -173,6 +181,62 @@ fn get_file_info(file_path: &str) -> Result<FileInfo, String> {
     })
 }
 
+// ディレクトリ内容を取得するコマンド
+#[tauri::command]
+fn list_directory(dir_path: &str) -> Result<Vec<DirectoryEntry>, String> {
+    println!("Listing directory: {}", dir_path);
+    let path = Path::new(dir_path);
+    
+    if !path.exists() {
+        println!("Directory does not exist: {}", dir_path);
+        return Err("ディレクトリが見つかりません".to_string());
+    }
+    
+    if !path.is_dir() {
+        println!("Path is not a directory: {}", dir_path);
+        return Err("指定されたパスはディレクトリではありません".to_string());
+    }
+
+    let mut entries = Vec::new();
+    
+    let read_dir = fs::read_dir(path)
+        .map_err(|e| format!("ディレクトリの読み込みに失敗しました: {}", e))?;
+
+    for entry in read_dir {
+        let entry = entry.map_err(|e| format!("エントリの読み込みに失敗しました: {}", e))?;
+        let entry_path = entry.path();
+        let metadata = entry.metadata().ok();
+        
+        let name = entry_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("不明")
+            .to_string();
+            
+        let is_dir = entry_path.is_dir();
+        let size = if is_dir { None } else { metadata.map(|m| m.len()) };
+        
+        entries.push(DirectoryEntry {
+            name,
+            is_dir,
+            size,
+            path: entry_path.to_string_lossy().to_string(),
+        });
+    }
+    
+    // ディレクトリを先に、ファイルを後に、それぞれ名前順でソート
+    entries.sort_by(|a, b| {
+        match (a.is_dir, b.is_dir) {
+            (true, false) => std::cmp::Ordering::Less,
+            (false, true) => std::cmp::Ordering::Greater,
+            _ => a.name.cmp(&b.name),
+        }
+    });
+    
+    println!("Successfully listed {} entries", entries.len());
+    Ok(entries)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -183,7 +247,8 @@ pub fn run() {
             select_image_file,
             read_image_file,
             get_file_info,
-            get_system_info
+            get_system_info,
+            list_directory
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

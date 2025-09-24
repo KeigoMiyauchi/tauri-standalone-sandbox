@@ -576,3 +576,125 @@ body {
         width: 100%;
     }
 }
+
+/* ファイルエクスプローラーデモ */
+.file-explorer-demo {
+    max-height: calc(100vh - 200px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.explorer-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+
+.path-display {
+    flex: 1;
+    padding: 0.5rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.path-display span {
+    font-weight: normal;
+    color: var(--primary-color);
+}
+
+.file-list {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+    overflow-y: auto;
+    min-height: 400px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.file-item:hover {
+    background-color: #f8f9fa;
+}
+
+.file-item.directory:hover {
+    background-color: #e3f2fd;
+}
+
+.file-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.file-name {
+    flex: 1;
+    font-weight: 500;
+    color: #333;
+}
+
+.file-item.directory .file-name {
+    color: var(--primary-color);
+}
+
+.file-size {
+    font-size: 0.85rem;
+    color: #666;
+    font-family: monospace;
+}
+
+.loading,
+.empty-directory,
+.error {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+}
+
+.error {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 1rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .explorer-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .path-display {
+        word-break: break-all;
+    }
+
+    .file-item {
+        padding: 1rem 0.75rem;
+    }
+
+    .file-name {
+        font-size: 0.9rem;
+    }
+}

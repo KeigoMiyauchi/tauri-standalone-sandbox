@@ -23,11 +23,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // リロードボタンの設定
     const reloadBtn = document.getElementById("reload-btn");
+    console.log("reloadBtn:", reloadBtn); // デバッグ用
     if (reloadBtn) {
         reloadBtn.addEventListener("click", () => {
             console.log("Reload button clicked");
             location.reload();
         });
+        console.log("Reload button event listener added"); // デバッグ用
+    } else {
+        console.error("Reload button not found"); // デバッグ用
     }
 
     const demoList = document.getElementById("demo-list");
@@ -57,6 +61,12 @@ window.addEventListener("DOMContentLoaded", () => {
           <span class="demo-description">OS、CPU、メモリ、ディスクなどのシステム情報を表示するデモ</span>
         </button>
       </li>
+      <li class="demo-item">
+        <button data-demo-id="file-explorer">
+          <span class="demo-title">ファイルエクスプローラー</span>
+          <span class="demo-description">ディレクトリの内容を表示し、ファイルやフォルダを閲覧するデモ</span>
+        </button>
+      </li>
     `;
 
         console.log("Demo list HTML set"); // デバッグ用
@@ -73,6 +83,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     showImageViewerDemo();
                 } else if (demoId === "system-info") {
                     showSystemInfoDemo();
+                } else if (demoId === "file-explorer") {
+                    showFileExplorerDemo();
                 }
             }
         });
@@ -80,6 +92,15 @@ window.addEventListener("DOMContentLoaded", () => {
         console.error("demo-list element not found"); // デバッグ用
     }
 });
+
+// 共通のユーティリティ関数
+function formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
 
 // Hello World デモを表示
 function showHelloWorldDemo() {
@@ -423,4 +444,128 @@ function showSystemInfoDemo() {
             loadSystemInfo();
         }
     }, 0);
+}
+
+// ファイルエクスプローラーデモを表示
+function showFileExplorerDemo() {
+    const demoDisplay = document.getElementById("demo-display");
+
+    demoDisplay.innerHTML = `
+        <div class="demo-container file-explorer-demo">
+            <div class="demo-header">
+                <h2>📁 ファイルエクスプローラー</h2>
+                <p>ディレクトリの内容を表示し、ファイルやフォルダを閲覧できます。</p>
+            </div>
+            
+            <div class="explorer-controls">
+                <div class="path-display">
+                    <strong>現在のパス:</strong> <span id="current-path">/tmp</span>
+                </div>
+                <button id="parent-dir-btn" class="btn btn-secondary">📁 親ディレクトリ</button>
+                <button id="home-dir-btn" class="btn btn-secondary">🏠 ホーム</button>
+            </div>
+            
+            <div id="file-list" class="file-list">
+                <div class="loading">ディレクトリを読み込み中...</div>
+            </div>
+        </div>
+    `;
+
+    // 現在のパスを保持する変数 - 確実に存在するパスを使用
+    let currentPath = navigator.platform.includes("Win") ? "C:\\" : "/tmp";
+
+    const currentPathSpan = document.getElementById("current-path");
+    const fileList = document.getElementById("file-list");
+    const parentDirBtn = document.getElementById("parent-dir-btn");
+    const homeDirBtn = document.getElementById("home-dir-btn");
+
+    // ディレクトリ内容を読み込む関数
+    const loadDirectory = async (path) => {
+        try {
+            console.log("Loading directory:", path);
+            fileList.innerHTML = '<div class="loading">読み込み中...</div>';
+            currentPath = path;
+            currentPathSpan.textContent = path;
+
+            // Tauriが利用可能かチェック
+            if (!window.__TAURI__ || !window.__TAURI__.core) {
+                throw new Error("Tauri APIが利用できません");
+            }
+
+            const entries = await window.__TAURI__.core.invoke(
+                "list_directory",
+                { dirPath: path }
+            );
+            console.log("Received entries:", entries);
+
+            if (entries.length === 0) {
+                fileList.innerHTML =
+                    '<div class="empty-directory">このディレクトリは空です</div>';
+                return;
+            }
+
+            const entriesHtml = entries
+                .map((entry) => {
+                    const icon = entry.is_dir ? "📁" : "📄";
+                    const sizeText = entry.is_dir
+                        ? ""
+                        : `<span class="file-size">${formatBytes(
+                              entry.size || 0
+                          )}</span>`;
+
+                    return `
+                    <div class="file-item ${
+                        entry.is_dir ? "directory" : "file"
+                    }" data-path="${entry.path}">
+                        <span class="file-icon">${icon}</span>
+                        <span class="file-name">${entry.name}</span>
+                        ${sizeText}
+                    </div>
+                `;
+                })
+                .join("");
+
+            fileList.innerHTML = entriesHtml;
+
+            // ファイル/ディレクトリクリックイベントを追加
+            fileList.addEventListener("click", (e) => {
+                const fileItem = e.target.closest(".file-item");
+                if (fileItem) {
+                    const path = fileItem.dataset.path;
+                    const isDirectory =
+                        fileItem.classList.contains("directory");
+
+                    if (isDirectory) {
+                        loadDirectory(path);
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("ディレクトリ読み込みエラー:", error);
+            fileList.innerHTML = `<div class="error">ディレクトリの読み込みに失敗しました: ${error}</div>`;
+        }
+    };
+
+    // 親ディレクトリボタンのイベント
+    parentDirBtn.addEventListener("click", () => {
+        const isWindows = navigator.platform.includes("Win");
+        const parentPath =
+            currentPath
+                .split(/[/\\]/)
+                .slice(0, -1)
+                .join(isWindows ? "\\" : "/") || (isWindows ? "C:\\" : "/");
+        loadDirectory(parentPath);
+    });
+
+    // ホームディレクトリボタンのイベント
+    homeDirBtn.addEventListener("click", () => {
+        // macOSの場合は/Users、Linuxの場合は/homeを使用
+        const homePath = navigator.platform.includes("Win")
+            ? "C:\\Users"
+            : "/Users";
+        loadDirectory(homePath);
+    });
+
+    // 初期ディレクトリを読み込み
+    loadDirectory(currentPath);
 }
