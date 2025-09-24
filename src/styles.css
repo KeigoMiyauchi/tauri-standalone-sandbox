@@ -437,3 +437,142 @@ body {
         font-size: 1.5rem;
     }
 }
+
+/* システム情報デモ用スタイル */
+.system-info-display {
+    margin: 1rem 0;
+}
+
+.system-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.info-section {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.info-section.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.info-item {
+    margin: 0.75rem 0;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: var(--secondary-color);
+    font-weight: 600;
+    display: inline-block;
+    min-width: 100px;
+}
+
+.usage-bar {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 20px;
+    margin: 0.5rem 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.usage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745 0%, #ffc107 70%, #dc3545 90%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.memory-usage,
+.disk-usage {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.5rem 0;
+}
+
+.memory-usage span,
+.disk-usage span {
+    font-weight: 600;
+    color: var(--secondary-color);
+    min-width: 100px;
+}
+
+.disks-container {
+    display: grid;
+    gap: 1rem;
+}
+
+.disk-item {
+    background: #f8f9fa;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.disk-item h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+}
+
+.disk-item p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.info-placeholder {
+    background: #f8f9fa;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--secondary-color);
+    font-style: italic;
+}
+
+.info-placeholder.error {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+/* システム情報デモのレスポンシブ対応 */
+@media (max-width: 768px) {
+    .system-info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .memory-usage,
+    .disk-usage {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .usage-bar {
+        width: 100%;
+    }
+}

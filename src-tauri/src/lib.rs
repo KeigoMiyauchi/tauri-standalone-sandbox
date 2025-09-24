@@ -3,11 +3,39 @@ use std::path::Path;
 use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
 use tauri_plugin_dialog::DialogExt;
+use sysinfo::{System, Disks};
 
 #[derive(Serialize, Deserialize)]
 struct FileInfo {
     name: String,
     size: u64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct SystemInfo {
+    os_name: String,
+    os_version: String,
+    kernel_version: String,
+    hostname: String,
+    cpu_brand: String,
+    cpu_cores: usize,
+    total_memory: u64,
+    used_memory: u64,
+    available_memory: u64,
+    memory_usage_percent: f32,
+    uptime: u64,
+    disks: Vec<DiskInfo>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct DiskInfo {
+    name: String,
+    mount_point: String,
+    total_space: u64,
+    available_space: u64,
+    used_space: u64,
+    usage_percent: f32,
+    file_system: String,
 }
 
 // 画像ファイル選択コマンド
@@ -62,6 +90,65 @@ fn read_image_file(file_path: &str) -> Result<String, String> {
     }
 }
 
+// システム情報を取得するコマンド
+#[tauri::command]
+fn get_system_info() -> Result<SystemInfo, String> {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    // CPU情報
+    let cpu_brand = sys.global_cpu_info().brand().to_string();
+    let cpu_cores = sys.cpus().len();
+
+    // メモリ情報
+    let total_memory = sys.total_memory();
+    let used_memory = sys.used_memory();
+    let available_memory = sys.available_memory();
+    let memory_usage_percent = if total_memory > 0 {
+        (used_memory as f32 / total_memory as f32) * 100.0
+    } else {
+        0.0
+    };
+
+    // ディスク情報
+    let disks_obj = Disks::new_with_refreshed_list();
+    let disks: Vec<DiskInfo> = disks_obj.iter().map(|disk| {
+        let total_space = disk.total_space();
+        let available_space = disk.available_space();
+        let used_space = total_space - available_space;
+        let usage_percent = if total_space > 0 {
+            (used_space as f32 / total_space as f32) * 100.0
+        } else {
+            0.0
+        };
+
+        DiskInfo {
+            name: disk.name().to_string_lossy().to_string(),
+            mount_point: disk.mount_point().to_string_lossy().to_string(),
+            total_space,
+            available_space,
+            used_space,
+            usage_percent,
+            file_system: disk.file_system().to_string_lossy().to_string(),
+        }
+    }).collect();
+
+    Ok(SystemInfo {
+        os_name: System::name().unwrap_or_else(|| "Unknown".to_string()),
+        os_version: System::os_version().unwrap_or_else(|| "Unknown".to_string()),
+        kernel_version: System::kernel_version().unwrap_or_else(|| "Unknown".to_string()),
+        hostname: System::host_name().unwrap_or_else(|| "Unknown".to_string()),
+        cpu_brand,
+        cpu_cores,
+        total_memory,
+        used_memory,
+        available_memory,
+        memory_usage_percent,
+        uptime: System::uptime(),
+        disks,
+    })
+}
+
 // ファイル情報を取得するコマンド
 #[tauri::command]
 fn get_file_info(file_path: &str) -> Result<FileInfo, String> {
@@ -95,7 +182,8 @@ pub fn run() {
             greet,
             select_image_file,
             read_image_file,
-            get_file_info
+            get_file_info,
+            get_system_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
