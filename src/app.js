@@ -56,6 +56,12 @@ window.addEventListener("DOMContentLoaded", () => {
           <span class="demo-description">ディレクトリの内容を表示し、ファイルやフォルダを閲覧するデモ</span>
         </button>
       </li>
+      <li class="demo-item">
+        <button data-demo-id="database-memo">
+          <span class="demo-title">💾 ローカルデータベースデモ</span>
+          <span class="demo-description">SQLiteを使ったメモアプリ - CRUD操作とデータの永続化</span>
+        </button>
+      </li>
     `;
 
         // クリックイベントを追加
@@ -71,6 +77,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     showSystemInfoDemo();
                 } else if (demoId === "file-explorer") {
                     showFileExplorerDemo();
+                } else if (demoId === "database-memo") {
+                    showDatabaseMemoDemo();
                 }
             }
         });
@@ -546,4 +554,368 @@ function showFileExplorerDemo() {
 
     // 初期ディレクトリを読み込み
     loadDirectory(currentPath);
+}
+
+// ========== ローカルデータベースデモ ==========
+function showDatabaseMemoDemo() {
+    const demoDisplay = document.getElementById("demo-display");
+    if (!demoDisplay) return;
+
+    demoDisplay.innerHTML = `
+        <div class="demo-container database-memo-demo">
+            <h2>💾 ローカルデータベースデモ</h2>
+            <p>SQLiteを使ったメモアプリケーション。CRUD操作とデータの永続化を実演します。</p>
+            
+            <div class="database-stats">
+                <h3>📊 データベース統計</h3>
+                <div id="database-stats-display">統計を読み込み中...</div>
+                <button id="refresh-stats">統計を更新</button>
+            </div>
+
+            <div class="memo-form">
+                <h3>✏️ メモの作成・編集</h3>
+                <input type="hidden" id="memo-id" value="">
+                <div class="form-group">
+                    <label for="memo-title">タイトル:</label>
+                    <input type="text" id="memo-title" placeholder="メモのタイトルを入力">
+                </div>
+                <div class="form-group">
+                    <label for="memo-content">内容:</label>
+                    <textarea id="memo-content" rows="4" placeholder="メモの内容を入力"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button id="save-memo" class="primary">💾 保存</button>
+                    <button id="cancel-edit" class="secondary" style="display: none;">❌ キャンセル</button>
+                </div>
+            </div>
+
+            <div class="memo-search">
+                <h3>🔍 メモの検索</h3>
+                <div class="search-group">
+                    <input type="text" id="search-query" placeholder="検索キーワードを入力">
+                    <button id="search-memos">🔍 検索</button>
+                    <button id="show-all-memos">📋 全て表示</button>
+                </div>
+            </div>
+
+            <div class="memo-list">
+                <h3>📝 メモ一覧</h3>
+                <div id="memos-display">メモを読み込み中...</div>
+            </div>
+        </div>
+    `;
+
+    // イベントリスナーを設定
+    setupDatabaseMemoEvents();
+
+    // 初期データを読み込み
+    loadDatabaseStats();
+    loadAllMemos();
+}
+
+function setupDatabaseMemoEvents() {
+    // 統計更新
+    document
+        .getElementById("refresh-stats")
+        ?.addEventListener("click", loadDatabaseStats);
+
+    // メモ保存
+    document.getElementById("save-memo")?.addEventListener("click", saveMemo);
+
+    // 編集キャンセル
+    document
+        .getElementById("cancel-edit")
+        ?.addEventListener("click", cancelEdit);
+
+    // 検索
+    document
+        .getElementById("search-memos")
+        ?.addEventListener("click", searchMemos);
+    document
+        .getElementById("search-query")
+        ?.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                searchMemos();
+            }
+        });
+
+    // 全メモ表示
+    document
+        .getElementById("show-all-memos")
+        ?.addEventListener("click", loadAllMemos);
+}
+
+async function loadDatabaseStats() {
+    try {
+        const statsDisplay = document.getElementById("database-stats-display");
+        if (!statsDisplay) return;
+
+        statsDisplay.textContent = "統計を読み込み中...";
+
+        const stats = await window.__TAURI__.core.invoke("get_database_stats");
+
+        const formattedSize = formatBytes(stats.database_size);
+
+        statsDisplay.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">総メモ数:</span>
+                    <span class="stat-value">${stats.total_memos}件</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">データベースサイズ:</span>
+                    <span class="stat-value">${formattedSize}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">データベースパス:</span>
+                    <span class="stat-value" title="${
+                        stats.database_path
+                    }">${stats.database_path.split("/").pop()}</span>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error("統計の読み込みエラー:", error);
+        document.getElementById(
+            "database-stats-display"
+        ).innerHTML = `<div class="error">統計の読み込みに失敗しました: ${error}</div>`;
+    }
+}
+
+async function loadAllMemos() {
+    try {
+        const memosDisplay = document.getElementById("memos-display");
+        if (!memosDisplay) return;
+
+        memosDisplay.innerHTML =
+            '<div class="loading">メモを読み込み中...</div>';
+
+        const memos = await window.__TAURI__.core.invoke("get_all_memos");
+
+        displayMemos(memos);
+    } catch (error) {
+        console.error("メモの読み込みエラー:", error);
+        document.getElementById(
+            "memos-display"
+        ).innerHTML = `<div class="error">メモの読み込みに失敗しました: ${error}</div>`;
+    }
+}
+
+async function searchMemos() {
+    try {
+        const query = document.getElementById("search-query")?.value.trim();
+        if (!query) {
+            loadAllMemos();
+            return;
+        }
+
+        const memosDisplay = document.getElementById("memos-display");
+        if (!memosDisplay) return;
+
+        memosDisplay.innerHTML = '<div class="loading">検索中...</div>';
+
+        const memos = await window.__TAURI__.core.invoke("search_memos", {
+            query,
+        });
+
+        displayMemos(memos, `検索結果: "${query}"`);
+    } catch (error) {
+        console.error("検索エラー:", error);
+        document.getElementById(
+            "memos-display"
+        ).innerHTML = `<div class="error">検索に失敗しました: ${error}</div>`;
+    }
+}
+
+function displayMemos(memos, title = "メモ一覧") {
+    const memosDisplay = document.getElementById("memos-display");
+    if (!memosDisplay) return;
+
+    if (memos.length === 0) {
+        memosDisplay.innerHTML = `
+            <div class="empty-state">
+                <p>📝 メモがありません</p>
+                <p>上のフォームから新しいメモを作成してください。</p>
+            </div>
+        `;
+        return;
+    }
+
+    const memosHtml = memos
+        .map((memo) => {
+            const createdDate = new Date(memo.created_at).toLocaleString(
+                "ja-JP"
+            );
+            const updatedDate = new Date(memo.updated_at).toLocaleString(
+                "ja-JP"
+            );
+            const isUpdated = memo.created_at !== memo.updated_at;
+
+            return `
+            <div class="memo-item" data-memo-id="${memo.id}">
+                <div class="memo-header">
+                    <h4 class="memo-title">${escapeHtml(memo.title)}</h4>
+                    <div class="memo-actions">
+                        <button class="edit-memo" data-memo-id="${
+                            memo.id
+                        }">✏️ 編集</button>
+                        <button class="delete-memo" data-memo-id="${
+                            memo.id
+                        }">🗑️ 削除</button>
+                    </div>
+                </div>
+                <div class="memo-content">${escapeHtml(memo.content)}</div>
+                <div class="memo-meta">
+                    <span class="memo-date">作成: ${createdDate}</span>
+                    ${
+                        isUpdated
+                            ? `<span class="memo-date updated">更新: ${updatedDate}</span>`
+                            : ""
+                    }
+                </div>
+            </div>
+        `;
+        })
+        .join("");
+
+    memosDisplay.innerHTML = `
+        <div class="memos-header">
+            <span class="memos-title">${title} (${memos.length}件)</span>
+        </div>
+        <div class="memos-list">
+            ${memosHtml}
+        </div>
+    `;
+
+    // メモアクションのイベントリスナーを設定
+    memosDisplay.querySelectorAll(".edit-memo").forEach((button) => {
+        button.addEventListener("click", () =>
+            editMemo(parseInt(button.dataset.memoId))
+        );
+    });
+
+    memosDisplay.querySelectorAll(".delete-memo").forEach((button) => {
+        button.addEventListener("click", () =>
+            deleteMemo(parseInt(button.dataset.memoId))
+        );
+    });
+}
+
+async function saveMemo() {
+    try {
+        const title = document.getElementById("memo-title")?.value.trim();
+        const content = document.getElementById("memo-content")?.value.trim();
+        const memoId = document.getElementById("memo-id")?.value;
+
+        if (!title || !content) {
+            alert("タイトルと内容を入力してください。");
+            return;
+        }
+
+        const saveButton = document.getElementById("save-memo");
+        if (saveButton) {
+            saveButton.textContent = "保存中...";
+            saveButton.disabled = true;
+        }
+
+        let result;
+        if (memoId) {
+            // 更新
+            result = await window.__TAURI__.core.invoke("update_memo", {
+                request: {
+                    id: parseInt(memoId),
+                    title,
+                    content,
+                },
+            });
+        } else {
+            // 新規作成
+            result = await window.__TAURI__.core.invoke("create_memo", {
+                request: { title, content },
+            });
+        }
+
+        // フォームをリセット
+        document.getElementById("memo-title").value = "";
+        document.getElementById("memo-content").value = "";
+        document.getElementById("memo-id").value = "";
+        document.getElementById("cancel-edit").style.display = "none";
+
+        // メモ一覧を更新
+        loadAllMemos();
+        loadDatabaseStats();
+
+        alert(memoId ? "メモを更新しました！" : "メモを作成しました！");
+    } catch (error) {
+        console.error("メモの保存エラー:", error);
+        alert(`メモの保存に失敗しました: ${error}`);
+    } finally {
+        const saveButton = document.getElementById("save-memo");
+        if (saveButton) {
+            saveButton.textContent = "💾 保存";
+            saveButton.disabled = false;
+        }
+    }
+}
+
+async function editMemo(memoId) {
+    try {
+        const memo = await window.__TAURI__.core.invoke("get_memo_by_id", {
+            id: memoId,
+        });
+
+        if (!memo) {
+            alert("メモが見つかりませんでした。");
+            return;
+        }
+
+        document.getElementById("memo-id").value = memo.id;
+        document.getElementById("memo-title").value = memo.title;
+        document.getElementById("memo-content").value = memo.content;
+        document.getElementById("cancel-edit").style.display = "inline-block";
+
+        // フォームまでスクロール
+        document
+            .querySelector(".memo-form")
+            .scrollIntoView({ behavior: "smooth" });
+    } catch (error) {
+        console.error("メモ編集エラー:", error);
+        alert(`メモの編集に失敗しました: ${error}`);
+    }
+}
+
+async function deleteMemo(memoId) {
+    if (!confirm("このメモを削除してもよろしいですか？")) {
+        return;
+    }
+
+    try {
+        const result = await window.__TAURI__.core.invoke("delete_memo", {
+            id: memoId,
+        });
+
+        if (result) {
+            loadAllMemos();
+            loadDatabaseStats();
+            alert("メモを削除しました。");
+        } else {
+            alert("メモの削除に失敗しました。");
+        }
+    } catch (error) {
+        console.error("メモ削除エラー:", error);
+        alert(`メモの削除に失敗しました: ${error}`);
+    }
+}
+
+function cancelEdit() {
+    document.getElementById("memo-id").value = "";
+    document.getElementById("memo-title").value = "";
+    document.getElementById("memo-content").value = "";
+    document.getElementById("cancel-edit").style.display = "none";
+}
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
 }
