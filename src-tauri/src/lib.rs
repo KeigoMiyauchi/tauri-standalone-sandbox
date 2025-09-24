@@ -184,16 +184,13 @@ fn get_file_info(file_path: &str) -> Result<FileInfo, String> {
 // ディレクトリ内容を取得するコマンド
 #[tauri::command]
 fn list_directory(dir_path: &str) -> Result<Vec<DirectoryEntry>, String> {
-    println!("Listing directory: {}", dir_path);
     let path = Path::new(dir_path);
     
     if !path.exists() {
-        println!("Directory does not exist: {}", dir_path);
         return Err("ディレクトリが見つかりません".to_string());
     }
     
     if !path.is_dir() {
-        println!("Path is not a directory: {}", dir_path);
         return Err("指定されたパスはディレクトリではありません".to_string());
     }
 
@@ -233,7 +230,6 @@ fn list_directory(dir_path: &str) -> Result<Vec<DirectoryEntry>, String> {
         }
     });
     
-    println!("Successfully listed {} entries", entries.len());
     Ok(entries)
 }
 

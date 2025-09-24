@@ -1,44 +1,33 @@
 // Tauriアプリケーション用JavaScript（完全スタンドアロン版）
-// 更新テスト: リロード確認
 
 // キーボードショートカットでリロード機能を追加
 document.addEventListener("keydown", (e) => {
     // Cmd+R (macOS) または Ctrl+R (Windows/Linux) でリロード
     if ((e.metaKey || e.ctrlKey) && e.key === "r") {
         e.preventDefault();
-        console.log("Manual reload triggered");
+
         location.reload();
     }
 
     // F5キーでもリロード
     if (e.key === "F5") {
         e.preventDefault();
-        console.log("F5 reload triggered");
+
         location.reload();
     }
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-    console.log("DOMContentLoaded triggered"); // デバッグ用
-
     // リロードボタンの設定
     const reloadBtn = document.getElementById("reload-btn");
-    console.log("reloadBtn:", reloadBtn); // デバッグ用
     if (reloadBtn) {
         reloadBtn.addEventListener("click", () => {
-            console.log("Reload button clicked");
             location.reload();
         });
-        console.log("Reload button event listener added"); // デバッグ用
-    } else {
-        console.error("Reload button not found"); // デバッグ用
     }
 
     const demoList = document.getElementById("demo-list");
     const demoDisplay = document.getElementById("demo-display");
-
-    console.log("demoList:", demoList); // デバッグ用
-    console.log("demoDisplay:", demoDisplay); // デバッグ用
 
     if (demoList) {
         // シンプルなデモ一覧を作成
@@ -69,14 +58,11 @@ window.addEventListener("DOMContentLoaded", () => {
       </li>
     `;
 
-        console.log("Demo list HTML set"); // デバッグ用
-
         // クリックイベントを追加
         demoList.addEventListener("click", (e) => {
             const button = e.target.closest("button[data-demo-id]");
             if (button && demoDisplay) {
                 const demoId = button.dataset.demoId;
-                console.log("Selected demo:", demoId);
                 if (demoId === "hello-world") {
                     showHelloWorldDemo();
                 } else if (demoId === "image-viewer") {
@@ -88,8 +74,6 @@ window.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
-    } else {
-        console.error("demo-list element not found"); // デバッグ用
     }
 });
 
@@ -181,7 +165,6 @@ function showImageViewerDemo() {
         if (button && display) {
             button.addEventListener("click", async () => {
                 try {
-                    console.log("画像選択ボタンがクリックされました");
                     button.textContent = "選択中...";
                     button.disabled = true;
 
@@ -189,8 +172,6 @@ function showImageViewerDemo() {
                     const selected = await window.__TAURI__.core.invoke(
                         "select_image_file"
                     );
-
-                    console.log("選択されたファイル:", selected);
 
                     if (selected) {
                         try {
@@ -304,7 +285,6 @@ function showSystemInfoDemo() {
                     const systemInfo = await window.__TAURI__.core.invoke(
                         "get_system_info"
                     );
-                    console.log("システム情報:", systemInfo);
 
                     const formatBytes = (bytes) => {
                         if (bytes === 0) return "0 B";
@@ -482,7 +462,6 @@ function showFileExplorerDemo() {
     // ディレクトリ内容を読み込む関数
     const loadDirectory = async (path) => {
         try {
-            console.log("Loading directory:", path);
             fileList.innerHTML = '<div class="loading">読み込み中...</div>';
             currentPath = path;
             currentPathSpan.textContent = path;
@@ -496,7 +475,6 @@ function showFileExplorerDemo() {
                 "list_directory",
                 { dirPath: path }
             );
-            console.log("Received entries:", entries);
 
             if (entries.length === 0) {
                 fileList.innerHTML =
