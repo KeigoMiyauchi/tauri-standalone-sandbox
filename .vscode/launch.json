@@ -17,12 +17,12 @@
             "skipFiles": ["<node_internals>/**"]
         },
         {
-            "name": "Tauri Development (Vite)",
+            "name": "Tauri Development (React)",
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["run", "tauri:dev:vite"],
+            "runtimeArgs": ["run", "tauri:dev:react"],
             "console": "integratedTerminal",
             "env": {
                 "RUST_BACKTRACE": "1",

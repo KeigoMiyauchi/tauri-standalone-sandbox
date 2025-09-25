@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::env;
 use base64::{Engine as _, engine::general_purpose};
 use serde::{Deserialize, Serialize};
 use tauri_plugin_dialog::DialogExt;
@@ -16,6 +17,7 @@ pub struct DirectoryEntry {
     pub is_dir: bool,
     pub size: Option<u64>,
     pub path: String,
+    pub modified: Option<u64>,
 }
 
 /// ファイル操作を担当するサービスクラス
@@ -119,13 +121,19 @@ impl FileService {
                 .to_string();
                 
             let is_dir = entry_path.is_dir();
-            let size = if is_dir { None } else { metadata.map(|m| m.len()) };
+            let size = if is_dir { None } else { metadata.as_ref().map(|m| m.len()) };
+            let modified = metadata.and_then(|m| {
+                m.modified().ok().and_then(|time| {
+                    time.duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs())
+                })
+            });
             
             entries.push(DirectoryEntry {
                 name,
                 is_dir,
                 size,
                 path: entry_path.to_string_lossy().to_string(),
+                modified,
             });
         }
         
@@ -139,6 +147,25 @@ impl FileService {
         });
         
         Ok(entries)
+    }
+
+    /// ホームディレクトリのパスを取得
+    pub fn get_home_directory() -> Result<String, String> {
+        match env::var("HOME") {
+            Ok(home_path) => Ok(home_path),
+            Err(_) => {
+                // Windowsの場合のフォールバック
+                match env::var("USERPROFILE") {
+                    Ok(user_profile) => Ok(user_profile),
+                    Err(_) => Err("ホームディレクトリの取得に失敗しました".to_string()),
+                }
+            }
+        }
+    }
+
+    /// ディレクトリを読み込み（React用エイリアス）
+    pub fn read_directory(path: &str) -> Result<Vec<DirectoryEntry>, String> {
+        Self::list_directory(path)
     }
 }
 

@@ -58,10 +58,10 @@
             "detail": "静的ファイル (file://) でTauriアプリを起動"
         },
         {
-            "label": "Tauri Dev (Vite開発サーバー)",
+            "label": "Tauri Dev (React)",
             "type": "shell",
             "command": "npm",
-            "args": ["run", "tauri:dev:vite"],
+            "args": ["run", "tauri:dev:react"],
             "group": "build",
             "isBackground": true,
             "problemMatcher": {
@@ -81,7 +81,7 @@
             "options": {
                 "cwd": "${workspaceFolder}"
             },
-            "detail": "Vite開発サーバー (http://localhost:3000) でTauriアプリを起動"
+            "detail": "React開発モード (http://localhost:3000) でTauriアプリを起動"
         },
         {
             "label": "Build Static Files",

@@ -72,6 +72,18 @@ fn list_directory(dir_path: &str) -> Result<Vec<DirectoryEntry>, String> {
     FileService::list_directory(dir_path)
 }
 
+/// ホームディレクトリ取得コマンド - ユーザーのホームディレクトリパスを取得
+#[tauri::command]
+fn get_home_directory() -> Result<String, String> {
+    FileService::get_home_directory()
+}
+
+/// ディレクトリ読み込みコマンド - React用のエイリアス
+#[tauri::command]
+fn read_directory(path: &str) -> Result<Vec<DirectoryEntry>, String> {
+    FileService::read_directory(path)
+}
+
 // ========== データベース操作コマンド ==========
 
 /// メモ作成コマンド - 新しいメモをデータベースに保存
@@ -140,6 +152,8 @@ pub fn run() {
             read_image_file,
             get_file_info,
             list_directory,
+            get_home_directory,
+            read_directory,
             // システム情報
             get_system_info,
             get_realtime_metrics,

@@ -44,9 +44,12 @@ standaloneTauriProject/
 │   ├── tauri.conf.json   # Tauri設定ファイル
 │   └── build.rs          # ビルドスクリプト
 ├── dist/                 # ビルド済みフロントエンド
-├── index.html            # HTMLエントリーポイント
+├── index-react.html      # React HTMLエントリーポイント
+├── src/                  # Reactコンポーネント
+│   ├── main.jsx          # React アプリエントリー
+│   ├── components/       # Reactコンポーネント
+│   └── styles.css        # CSS スタイル
 ├── package.json          # Node.js依存関係
-├── tsconfig.json         # TypeScript設定
-├── vite.config.ts        # Vite設定
+├── vite.config.js        # Vite設定
 └── README.md             # このファイル
 ```

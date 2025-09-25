@@ -5,11 +5,12 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "dev:static": "VITE_PORT=1420 vite",
         "build": "vite build",
-        "build:static": "echo 'Static files are already ready' && ls -la index.html src/",
+        "build:static": "echo 'Static files are already ready' && ls -la index-react.html src/",
         "tauri": "tauri",
-        "tauri:dev": "tauri dev",
-        "tauri:dev:vite": "concurrently \"vite\" \"tauri dev\"",
+        "tauri:dev": "tauri dev --config src-tauri/tauri-static.conf.json",
+        "tauri:dev:react": "tauri dev",
         "tauri:build": "tauri build"
     },
     "dependencies": {

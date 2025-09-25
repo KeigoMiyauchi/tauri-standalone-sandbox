@@ -5,9 +5,15 @@ export default defineConfig({
     plugins: [react()],
     build: {
         outDir: "dist",
+        rollupOptions: {
+            input: {
+                main: "index-react.html",
+            },
+        },
     },
     server: {
-        port: 3000,
+        port: process.env.VITE_PORT ? parseInt(process.env.VITE_PORT) : 3000,
         strictPort: true,
     },
+    root: ".",
 });
