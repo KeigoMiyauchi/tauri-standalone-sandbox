@@ -30,45 +30,8 @@ window.addEventListener("DOMContentLoaded", () => {
     const demoDisplay = document.getElementById("demo-display");
 
     if (demoList) {
-        // シンプルなデモ一覧を作成
-        demoList.innerHTML = `
-      <li class="demo-item">
-        <button data-demo-id="hello-world">
-          <span class="demo-title">Hello World デモ</span>
-          <span class="demo-description">ボタンをクリックしてHello Worldメッセージを表示するシンプルなデモ</span>
-        </button>
-      </li>
-      <li class="demo-item">
-        <button data-demo-id="image-viewer">
-          <span class="demo-title">画像ビューア</span>
-          <span class="demo-description">ファイル選択ダイアログで画像を選択し、表示するデモ</span>
-        </button>
-      </li>
-      <li class="demo-item">
-        <button data-demo-id="system-info">
-          <span class="demo-title">システム情報</span>
-          <span class="demo-description">OS、CPU、メモリ、ディスクなどのシステム情報を表示するデモ</span>
-        </button>
-      </li>
-      <li class="demo-item">
-        <button data-demo-id="file-explorer">
-          <span class="demo-title">ファイルエクスプローラー</span>
-          <span class="demo-description">ディレクトリの内容を表示し、ファイルやフォルダを閲覧するデモ</span>
-        </button>
-      </li>
-      <li class="demo-item">
-        <button data-demo-id="database-memo">
-          <span class="demo-title">💾 ローカルデータベースデモ</span>
-          <span class="demo-description">SQLiteを使ったメモアプリ - CRUD操作とデータの永続化</span>
-        </button>
-      </li>
-      <li class="demo-item">
-        <button data-demo-id="realtime-charts">
-          <span class="demo-title">📊 リアルタイムグラフデモ</span>
-          <span class="demo-description">CPU・メモリ使用率をリアルタイムで線グラフ表示</span>
-        </button>
-      </li>
-    `;
+        // Rust側からデモ一覧を取得して表示
+        loadDemoList();
 
         // クリックイベントを追加
         demoList.addEventListener("click", (e) => {
@@ -92,6 +55,74 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+// Rust側からデモ一覧を取得して表示する関数
+async function loadDemoList() {
+    const demoList = document.getElementById("demo-list");
+
+    try {
+        // Rust側からデモ一覧を取得
+        const demos = await window.__TAURI__.core.invoke("get_demo_list");
+
+        // デモ一覧のHTMLを生成
+        const demoListHTML = demos
+            .map(
+                (demo) => `
+            <li class="demo-item">
+                <button data-demo-id="${demo.id}">
+                    <span class="demo-title">${demo.icon} ${demo.title}</span>
+                    <span class="demo-description">${demo.description}</span>
+                </button>
+            </li>
+        `
+            )
+            .join("");
+
+        demoList.innerHTML = demoListHTML;
+
+        // クリックイベントを再設定
+        demoList.addEventListener("click", (e) => {
+            const button = e.target.closest("button[data-demo-id]");
+            if (button) {
+                const demoId = button.dataset.demoId;
+                handleDemoSelection(demoId);
+
+                // アクティブボタンを設定
+                document
+                    .querySelectorAll(".demo-item button")
+                    .forEach((btn) => btn.classList.remove("active"));
+                button.classList.add("active");
+            }
+        });
+    } catch (error) {
+        console.error("デモ一覧の取得に失敗しました:", error);
+        demoList.innerHTML = `
+            <li class="demo-item">
+                <div class="error-message">
+                    <h3>エラー</h3>
+                    <p>デモ一覧の取得に失敗しました: ${error}</p>
+                </div>
+            </li>
+        `;
+    }
+}
+
+// デモ選択ハンドラー
+function handleDemoSelection(demoId) {
+    if (demoId === "hello-world") {
+        showHelloWorldDemo();
+    } else if (demoId === "image-viewer") {
+        showImageViewerDemo();
+    } else if (demoId === "system-info") {
+        showSystemInfoDemo();
+    } else if (demoId === "file-explorer") {
+        showFileExplorerDemo();
+    } else if (demoId === "database-memo") {
+        showDatabaseMemoDemo();
+    } else if (demoId === "realtime-charts") {
+        showRealtimeChartsDemo();
+    }
+}
 
 // 共通のユーティリティ関数
 function formatBytes(bytes) {

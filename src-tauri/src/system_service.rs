@@ -39,11 +39,7 @@ pub struct RealTimeMetrics {
 pub struct SystemService;
 
 impl SystemService {
-    /// 新しいSystemServiceインスタンスを作成
-    pub fn new() -> Self {
-        Self
-    }
-
+    
     /// システム情報を取得
     pub fn get_system_info() -> Result<SystemInfo, String> {
         let mut sys = System::new_all();

@@ -22,11 +22,7 @@ pub struct DirectoryEntry {
 pub struct FileService;
 
 impl FileService {
-    /// 新しいFileServiceインスタンスを作成
-    pub fn new() -> Self {
-        Self
-    }
-
+    
     /// 画像ファイル選択ダイアログを表示
     pub async fn select_image_file(app: &tauri::AppHandle) -> Result<Option<String>, String> {
         let dialog = app.dialog()

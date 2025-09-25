@@ -13,6 +13,7 @@ use database_service::DatabaseService;
 pub use file_service::{FileInfo, DirectoryEntry};
 pub use system_service::{SystemInfo, DiskInfo, RealTimeMetrics};
 pub use database_service::{Memo, CreateMemoRequest, UpdateMemoRequest};
+pub use demo_service::DemoInfo;
 
 // ========== Tauri コマンド層 ==========
 // この層は薄いラッパーとして機能し、サービス層に処理を委譲する
@@ -27,6 +28,18 @@ async fn select_image_file(app: tauri::AppHandle) -> Result<Option<String>, Stri
 #[tauri::command]
 fn greet(name: &str) -> String {
     DemoService::greet(name)
+}
+
+/// デモ一覧取得コマンド - 利用可能なデモの詳細情報を取得
+#[tauri::command]
+fn get_demo_list() -> Vec<DemoInfo> {
+    DemoService::get_demo_list()
+}
+
+/// 特定デモ情報取得コマンド - 指定されたデモの詳細情報を取得
+#[tauri::command]
+fn get_demo_info(demo_id: &str) -> Option<DemoInfo> {
+    DemoService::get_demo_info(demo_id)
 }
 
 /// 画像ファイル読み込みコマンド - ファイルをBase64エンコードして返す
@@ -120,6 +133,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             // デモ機能
             greet,
+            get_demo_list,
+            get_demo_info,
             // ファイル操作
             select_image_file,
             read_image_file,
