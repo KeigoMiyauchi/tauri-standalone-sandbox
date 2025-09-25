@@ -4,8 +4,8 @@
     "version": "0.1.0",
     "identifier": "com.example.standalone",
     "build": {
-        "beforeDevCommand": "npm run build",
-        "beforeBuildCommand": "",
+        "beforeDevCommand": null,
+        "devUrl": null,
         "frontendDist": "../dist"
     },
     "app": {
