@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "tauri:dev",
+            "label": "Tauri Dev (静的ファイル)",
             "type": "shell",
             "command": "npm",
             "args": ["run", "tauri:dev"],
@@ -54,7 +54,56 @@
             },
             "options": {
                 "cwd": "${workspaceFolder}"
-            }
+            },
+            "detail": "静的ファイル (file://) でTauriアプリを起動"
+        },
+        {
+            "label": "Tauri Dev (Vite開発サーバー)",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "tauri:dev:vite"],
+            "group": "build",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "rust",
+                "fileLocation": ["relative", "${workspaceFolder}/src-tauri"],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(\\d+):(\\d+)\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "endLine": 4,
+                    "endColumn": 5,
+                    "severity": 6,
+                    "message": 7
+                }
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Vite開発サーバー (http://localhost:3000) でTauriアプリを起動"
+        },
+        {
+            "label": "Build Static Files",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "build:static"],
+            "group": "build",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "静的ファイルをビルド"
+        },
+        {
+            "label": "Build Production",
+            "type": "shell",
+            "command": "npm",
+            "args": ["run", "tauri:build"],
+            "group": "build",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "本番用Tauriアプリをビルド"
         }
     ]
 }
